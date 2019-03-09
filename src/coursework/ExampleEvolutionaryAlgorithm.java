@@ -21,6 +21,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	/**
 	 * The Main Evolutionary Loop
 	 */
+	int chromosomePointer = 0;
 	/*
 	 * TODO - Replace more chomosomes from the population, e.g. 10% using for loop
 	 * 		- Check reproduce if it works correctly
@@ -49,7 +50,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			 * You must set the best Individual at the end of a run
 			 * 
 			 */
-
+			
 			// Select 2 Individuals from the current population. Currently returns random Individual
 			Individual parent1 = select(); 
 			Individual parent2 = select();
@@ -156,36 +157,35 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		return parent.copy();
 		
 	}
-	
-	private int reproduceHelper(int offset, int startIndex, Integer chromosemeCounter, Individual mother, Individual father, Individual childOne, Individual childTwo, int range, int previousLayerSize, int curretLayerSize) {
+		
+	private void reproduceHelper(Individual mother, Individual father, Individual childOne, Individual childTwo, int range, int previousLayerSize, int curretLayerSize) {
 		int neuronCounter = 0;
 		ArrayList<Double> neuronFather = new ArrayList<Double>();
 		ArrayList<Double> neuronMother = new ArrayList<Double>();
 		ArrayList<Double> childOneBiases = new ArrayList<Double>();
 		ArrayList<Double> childTwoBiases = new ArrayList<Double>();
-		Random bool = new Random();
-		for (int i = startIndex; i < range; i++) {
-//			System.out.print(i+";");
+		
+		for (int i = chromosomePointer; i < range; i++) {
 			neuronFather.add(father.chromosome[i]);
 			neuronMother.add(mother.chromosome[i]);
 			if ((i+1) % previousLayerSize == 0) {
 				neuronCounter += 1;
 				int index = (curretLayerSize - neuronCounter) * previousLayerSize + neuronCounter;
 				
-				if (bool.nextBoolean()) {
+				if (Parameters.random.nextBoolean()) {
 					for (int j = 0; j < neuronFather.size(); j++) {
-						childOne.chromosome[j+((neuronCounter-1)*previousLayerSize)+offset] = neuronFather.get(j);
-						childTwo.chromosome[j+((neuronCounter-1)*previousLayerSize)+offset] = neuronMother.get(j);
-						chromosemeCounter += 1;
+						childOne.chromosome[chromosomePointer] = neuronFather.get(j);
+						childTwo.chromosome[chromosomePointer] = neuronMother.get(j);
+						chromosomePointer += 1;
 					}
 					childOneBiases.add(father.chromosome[i+index]);
 					childTwoBiases.add(mother.chromosome[i+index]);
 				}
 				else {
 					for (int j = 0; j < neuronFather.size(); j++) {
-						childOne.chromosome[j+((neuronCounter-1)*previousLayerSize)+offset] = neuronMother.get(j);
-						childTwo.chromosome[j+((neuronCounter-1)*previousLayerSize)+offset] = neuronFather.get(j);
-						chromosemeCounter += 1;
+						childOne.chromosome[chromosomePointer] = neuronMother.get(j);
+						childTwo.chromosome[chromosomePointer] = neuronFather.get(j);
+						chromosomePointer += 1;
 					}
 					childOneBiases.add(mother.chromosome[i+index]);
 					childTwoBiases.add(father.chromosome[i+index]);
@@ -197,12 +197,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		}
 		
 		for (int i = 0; i<childOneBiases.size(); i++) {
-//			System.out.print(childOneBiases.size()+";");
-			childOne.chromosome[chromosemeCounter] = childOneBiases.get(i);
-			childTwo.chromosome[chromosemeCounter] = childTwoBiases.get(i);
-			chromosemeCounter += 1;
+			childOne.chromosome[chromosomePointer] = childOneBiases.get(i);
+			childTwo.chromosome[chromosomePointer] = childTwoBiases.get(i);
+			chromosomePointer += 1;
 		}
-		return chromosemeCounter;
 	}
 
 	/**
@@ -217,16 +215,17 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		Individual childOne = new Individual();
 		Individual childTwo = new Individual();
 		
-		Integer chromosomeCounter = new Integer(0);
+		chromosomePointer = 0;
 		
 		int range = Parameters.getNumHidden() * NeuralNetwork.numInput;
 //		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
 //		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
 //		System.out.println("childOne Before: "+Arrays.toString(childOne.chromosome));
 //		System.out.println("childTwo Before: "+Arrays.toString(childTwo.chromosome));
-		int result = reproduceHelper(0, 0, chromosomeCounter, parent1, parent2, childOne, childTwo, range, NeuralNetwork.numInput, Parameters.getNumHidden());
+		reproduceHelper(parent1, parent2, childOne, childTwo, range, NeuralNetwork.numInput, Parameters.getNumHidden());
+//		System.out.println("Counter: "+chromosomePointer);
 		range = parent1.chromosome.length;
-		reproduceHelper(result, result, result, parent1, parent2, childOne, childTwo, range, Parameters.getNumHidden(), NeuralNetwork.numOutput);
+		reproduceHelper(parent1, parent2, childOne, childTwo, range, Parameters.getNumHidden(), NeuralNetwork.numOutput);
 //		System.out.println("childOne After: "+Arrays.toString(childOne.chromosome));
 //		System.out.println("childTwo After: "+Arrays.toString(childTwo.chromosome));
 		
