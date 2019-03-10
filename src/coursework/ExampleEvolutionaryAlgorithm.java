@@ -2,7 +2,9 @@ package coursework;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.TreeMap;
 
 import model.Fitness;
 import model.Individual;
@@ -56,6 +58,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			// Select 2 Individuals from the current population. Currently returns random Individual
 			Individual parent1 = select(); 
 			Individual parent2 = select();
+//			System.out.print("Parent1: "+parent1.fitness);
+//			System.out.print("\nParent2: "+parent2.fitness);
 			
 			// Avoid selecting the same parent twice
 			if (parent1 == parent2) {
@@ -133,27 +137,23 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	}
 
 	/**
-	 * Selection --
+	 * Selection
 	 * 
 	 * NEEDS REPLACED with proper selection this just returns a copy of a random
 	 * member of the population
 	 */
-	private Individual select() {		
-		//Individual parent = population.get(Parameters.random.nextInt(Parameters.popSize));
-		//return parent.copy();
-		
-		/*
-		 * ROULETTE
-		 */
+	/* ROULETTE */
+	private Individual rouletteSelection() {
 		double fitnessSum = 0;
 		for (int i = 0; i < population.size(); i++) {
 			fitnessSum += 1.0 / population.get(i).fitness;
 		}
-		
+
 		Individual parent = null;
+
 		double randomNumber = fitnessSum * Parameters.random.nextDouble();
 		fitnessSum = 0;
-		
+
 		for (int i = 0; i < population.size(); i++) {
 			fitnessSum += 1.0 / population.get(i).fitness;
 			if (fitnessSum > randomNumber) {
@@ -161,11 +161,50 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 				break;
 			}
 		}
-		
-		return parent.copy();
-		
+		return parent;
 	}
-		
+
+	private Individual tournamentSelection() {
+		// The tournament size of 10% of the population
+		int tournamentSize = (int)(population.size()*0.1);
+		TreeMap<Integer, Individual> potentialParents = new TreeMap<Integer, Individual>();
+
+		while(potentialParents.size() < tournamentSize) {
+			int randomIndex = Parameters.random.nextInt(population.size());
+			potentialParents.put(randomIndex, population.get(randomIndex));
+		}
+
+		double bestFitness = Integer.MAX_VALUE;
+		Individual chosenParent = null;
+
+		for(Entry<Integer, Individual> entry : potentialParents.entrySet()) {
+			Individual individual = entry.getValue();
+			double currentFitness = individual.fitness;
+
+			if (chosenParent == null) {
+				chosenParent = individual;
+				bestFitness = currentFitness;
+			} else if(bestFitness > currentFitness) {
+				chosenParent = individual;
+				bestFitness = currentFitness;
+			}
+		}
+
+		return chosenParent;
+	}
+
+	private Individual select() {
+		Individual parent = null;
+
+		/* Selects based on the their fitness*/
+//		parent = rouletteSelection();
+
+		/* Selects based on tournament */
+		parent = tournamentSelection();
+
+		return parent.copy();
+	}
+
 	private void reproduceHelper(Individual mother, Individual father, Individual childOne, Individual childTwo, int range, int previousLayerSize, int curretLayerSize) {
 		int neuronCounter = 0;
 		ArrayList<Double> neuronFather = new ArrayList<Double>();
@@ -211,35 +250,70 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		}
 	}
 
-	/**
-	 * Crossover / Reproduction
-	 * 
-	 * NEEDS REPLACED with proper method this code just returns exact copies of the
-	 * parents. 
-	 */
-	private ArrayList<Individual> reproduce(Individual parent1, Individual parent2) {
-		ArrayList<Individual> children = new ArrayList<>();
-		
+	private void crossoverPerNeuron(ArrayList<Individual> children, Individual parent1, Individual parent2)
+	{
 		Individual childOne = new Individual();
 		Individual childTwo = new Individual();
-		
+
 		chromosomePointer = 0;
-		
+
 		int range = Parameters.getNumHidden() * NeuralNetwork.numInput;
-//		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
-//		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
-//		System.out.println("childOne Before: "+Arrays.toString(childOne.chromosome));
-//		System.out.println("childTwo Before: "+Arrays.toString(childTwo.chromosome));
 		reproduceHelper(parent1, parent2, childOne, childTwo, range, NeuralNetwork.numInput, Parameters.getNumHidden());
-//		System.out.println("Counter: "+chromosomePointer);
+
 		range = parent1.chromosome.length;
 		reproduceHelper(parent1, parent2, childOne, childTwo, range, Parameters.getNumHidden(), NeuralNetwork.numOutput);
-//		System.out.println("childOne After: "+Arrays.toString(childOne.chromosome));
-//		System.out.println("childTwo After: "+Arrays.toString(childTwo.chromosome));
-		
+
 		children.add(childOne.copy());
 		children.add(childTwo.copy());
+	}
+
+	private void onePointCrossOver(ArrayList<Individual> children, Individual parent1, Individual parent2, int cutPoint) 
+	{
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+
+		// This assumes that parent1 and parent2 have chromosomes with the same length
+		int chromosomeLength = parent1.chromosome.length;
+
+		for(int i = 0; i < cutPoint; i++) {
+			childOne.chromosome[i] = parent1.chromosome[i];
+			childTwo.chromosome[i] = parent2.chromosome[i];
+		}
+
+		for(int i = cutPoint; i < chromosomeLength; i++) {
+			childOne.chromosome[i] = parent2.chromosome[i];
+			childTwo.chromosome[i] = parent1.chromosome[i];
+		}
+
+		children.add(childOne);
+		children.add(childTwo);
+	}
+	/**
+	 * Crossover / Reproduction
+	 *
+	 * NEEDS REPLACED with proper method this code just returns exact copies of the
+	 * parents.
+	 */
+	private ArrayList<Individual> reproduce(Individual parent1, Individual parent2) {
+
+		ArrayList<Individual> children = new ArrayList<>();
+
+		/* Swaps the weights per neuron */
+		//crossoverPerNeuron(children, parent1, parent2);
+
+		/* One point crossover */
+		// This assumes that parent1 and parent2 have chromosomes with the same length
+		int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
+		onePointCrossOver(children, parent1, parent2, cutPoint);
+
+		/*DEBUG INF0*/
+//		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
+//		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
+//		System.out.println("childOne After: "+Arrays.toString(children.get(0).chromosome));
+//		System.out.println("childTwo After: "+Arrays.toString(children.get(1).chromosome));
 //		System.exit(0);
+		/***********************************/
+
 		return children;
 	} 
 	
@@ -251,15 +325,17 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private void mutate(ArrayList<Individual> individuals) {		
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
-				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-//					individual.chromosome[i] += Parameters.random.nextGaussian()*0.1;
-//					System.out.print("\n\tCHANGING "+individuals.size()+"\n");
-					if (Parameters.random.nextBoolean()) {
-						individual.chromosome[i] += (Parameters.mutateChange);
-					} else {
-						individual.chromosome[i] -= (Parameters.mutateChange);
-					}
+				if (Parameters.random.nextDouble() > 0.85) {
+					double change = Parameters.random.nextDouble() - 0.5;
+					individual.chromosome[i] += (change);
 				}
+//				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+//					if (Parameters.random.nextBoolean()) {
+//						individual.chromosome[i] += (Parameters.mutateChange);
+//					} else {
+//						individual.chromosome[i] -= (Parameters.mutateChange);
+//					}
+//				}
 			}
 		}		
 	}
@@ -270,19 +346,61 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * (regardless of fitness)
 	 * 
 	 */
-	private void replace(ArrayList<Individual> individuals) {
-		for(Individual individual : individuals) {
+	private void replaceWorstRegardlessOfFitness(ArrayList<Individual> individuals)
+	{
+		for(Individual individual : individuals)
+		{
 			int idx = getWorstIndex();
-//			if (population.get(idx).fitness>individual.fitness) {
 			population.set(idx, individual);
-//			}
-//			else {
-//				System.out.print("\n\tThis child is worse than the worst memeber of the populaltion! Not added!");
-//			}
-		}		
+		}
 	}
 
-	
+	private int getWorstIndexFromSubpopulation(TreeMap<Integer, Individual> individuals) {
+		Individual worst = null;
+		int idx = -1;
+		for(Entry<Integer, Individual> entry : individuals.entrySet()) {
+			Integer i = entry.getKey();
+			Individual individual = entry.getValue();
+
+			if (worst == null) {
+				worst = individual;
+				idx = i;
+			} else if (individual.fitness > worst.fitness) {
+				worst = individual;
+				idx = i;
+			}
+		}
+		return idx;
+	}
+
+	private void tournamentReplacement(ArrayList<Individual> newIndividuals)
+	{
+		for(Individual individual : newIndividuals) {
+			// The tournament size of 10% of the population
+			int tournamentSize = (int)(population.size()*0.2);
+			TreeMap<Integer, Individual> potentialMembersToBeReplaced = new TreeMap<Integer, Individual>();
+
+			while(potentialMembersToBeReplaced.size() < tournamentSize) {
+				int randomIndex = Parameters.random.nextInt(population.size());
+				potentialMembersToBeReplaced.put(randomIndex, population.get(randomIndex));
+			}
+
+			int indexToBeReplaced = getWorstIndexFromSubpopulation(potentialMembersToBeReplaced);
+			if(population.get(indexToBeReplaced).fitness > individual.fitness) {
+				population.set(indexToBeReplaced, individual);
+			}
+		}
+	}
+
+	private void replace(ArrayList<Individual> individuals) {
+		// Replace the worst one regardless of the fitness of the new member
+		//replaceWorstRegardlessOfFitness(individuals);
+
+		// Perform tournament replacement
+		tournamentReplacement(individuals);
+	}
+
+
 
 	/**
 	 * Returns the index of the worst member of the population
@@ -302,7 +420,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}
 		return idx;
-	}	
+	}
 
 	@Override
 	public double activationFunction(double x) {
