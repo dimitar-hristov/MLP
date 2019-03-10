@@ -28,6 +28,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 		- Change activation function to be Adam
 	 * 		- Only replace if the new individual has better fitness score than the worst in the current population
 	 * 		- Make sure the parents are different individuals
+	 * 		- Try with binary tournament
+	 * 		- Change mutation to use gausiom distrobution
 	 */
 	@Override
 	public void run() {		
@@ -54,6 +56,12 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			// Select 2 Individuals from the current population. Currently returns random Individual
 			Individual parent1 = select(); 
 			Individual parent2 = select();
+			
+			// Avoid selecting the same parent twice
+			if (parent1 == parent2) {
+				System.out.print("\n\tOuch, the same parent\n");
+//				parent2 = select();
+			}
 
 			// Generate a child by crossover. Not Implemented			
 			ArrayList<Individual> children = reproduce(parent1, parent2);			
@@ -98,7 +106,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 
 	 */
 	private Individual getBest() {
-		best = null;;
+		best = null;
 		for (Individual individual : population) {
 			if (best == null) {
 				best = individual.copy();
@@ -244,6 +252,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
 				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+//					individual.chromosome[i] += Parameters.random.nextGaussian()*0.1;
+//					System.out.print("\n\tCHANGING "+individuals.size()+"\n");
 					if (Parameters.random.nextBoolean()) {
 						individual.chromosome[i] += (Parameters.mutateChange);
 					} else {
@@ -262,8 +272,13 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 */
 	private void replace(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
-			int idx = getWorstIndex();		
+			int idx = getWorstIndex();
+//			if (population.get(idx).fitness>individual.fitness) {
 			population.set(idx, individual);
+//			}
+//			else {
+//				System.out.print("\n\tThis child is worse than the worst memeber of the populaltion! Not added!");
+//			}
 		}		
 	}
 
