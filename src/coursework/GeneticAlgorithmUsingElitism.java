@@ -20,18 +20,33 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		best = getBest();
 		System.out.println("Best from initial population "+ best);
 		
-		while (evaluations < Parameters.maxEvaluations) {		
+		while (evaluations < Parameters.maxEvaluations) {
+			int portion = population.size() / 4;
+			int restPortion = population.size() * 3/4;
+			int randomLosers = 10;
+			int randomMutations = 10;
 			ArrayList<Individual> bestOfCurretPopulation = new ArrayList<Individual>();
 			
 			Collections.sort(population);
-			bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, (population.size() / 4)));
+			bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, portion));
 			
-			for (int index = population.size() / 4; index < population.size()/2; index++) {
-				bestOfCurretPopulation.add(population.get(Parameters.random.nextInt(population.size()/4) + population.size() / 4));
+			for (int index = 0; index < randomLosers; index++) {
+				int randomNumber = Parameters.random.nextInt((restPortion - portion) + 1) + portion;
+				bestOfCurretPopulation.add(population.get(randomNumber));
+			}
+			
+			ArrayList<Individual> mutatedPopulation = new ArrayList<Individual>();
+			for (int index = 0; index < randomMutations; index++) {
+				int randomNumber = Parameters.random.nextInt((bestOfCurretPopulation.size()));
+				mutatedPopulation.add(mutate(bestOfCurretPopulation.get(randomNumber)));
+			}
+			
+			for (Individual x : mutatedPopulation){
+				bestOfCurretPopulation.add(x);
 			}
 			
 			population = breed(bestOfCurretPopulation);		
-			System.out.println(population);
+//			System.out.println(population);
 			best = getBest();
 			
 			outputStats();
@@ -69,18 +84,25 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		return best;
 	}
 	
-	private void mutate(ArrayList<Individual> individuals) {
-		for(Individual individual : individuals) {
-			for (int i = 0; i < individual.chromosome.length; i++) {
-				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-					if (Parameters.random.nextBoolean()) {
-						individual.chromosome[i] += (Parameters.mutateChange);
-					} else {
-						individual.chromosome[i] -= (Parameters.mutateChange);
-					}
+	float reduceFactor = 1.0f;
+	private Individual mutate(Individual individual) {
+		Individual newMember = new Individual();
+		newMember.chromosome = individual.chromosome;
+			for (int i = 0; i < newMember.chromosome.length; i++) {
+				if (Parameters.random.nextDouble() > 0.85) {
+					double change = Parameters.random.nextDouble() - 0.5;
+					individual.chromosome[i] += (change*reduceFactor);
 				}
+				/*if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+					if (Parameters.random.nextDouble() < 0.5D) {
+						newMember.chromosome[i] += (Parameters.mutateChange);
+					} else {
+						newMember.chromosome[i] -= (Parameters.mutateChange);
+					}
+				}*/
 			}
-		}
+			reduceFactor*=0.9998f;
+			return newMember;
 	}
 	
 	private ArrayList<Individual> breed(ArrayList<Individual> currentBestPopulation){
@@ -106,7 +128,7 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 				newPopulation.add(x);
 			}
 		}
-		
+		System.out.println(newPopulation.size());
 		return newPopulation;
 	}
 	
@@ -154,9 +176,12 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 
 		/* One point crossover */
 		// This assumes that parent1 and parent2 have chromosomes with the same length
-		int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
-		onePointCrossOver(children, parent1, parent2, cutPoint);
-
+		//int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
+		//onePointCrossOver(children, parent1, parent2, cutPoint);
+		
+		/* Uniform crossover */
+		uniformCrossover(children, parent1, parent2);
+		
 		/*DEBUG INF0*/
 //		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
 //		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
@@ -186,6 +211,37 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 			childTwo.chromosome[i] = parent1.chromosome[i];
 		}
 
+		children.add(childOne);
+		children.add(childTwo);
+	}
+	
+	private void uniformCrossover(ArrayList<Individual> children, Individual parent1, Individual parent2) 
+	{
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+
+		// This assumes that parent1 and parent2 have chromosomes with the same length
+		int chromosomeLength = parent1.chromosome.length;
+
+		for(int i = 0; i < chromosomeLength; i++) {
+			if (Parameters.random.nextDouble() < 0.5D) {
+				childOne.chromosome[i] = parent1.chromosome[i];
+			}
+			else {
+				childOne.chromosome[i] = parent2.chromosome[i];
+			}
+		}
+
+		for(int i = 0; i < chromosomeLength; i++) {
+			if (Parameters.random.nextDouble() < 0.5D) {
+				childTwo.chromosome[i] = parent1.chromosome[i];
+			}
+			else {
+				childTwo.chromosome[i] = parent2.chromosome[i];
+			}
+		}
+
+		
 		children.add(childOne);
 		children.add(childTwo);
 	}

@@ -28,7 +28,8 @@ public class StartNoGui {
 		/*
 		 * Experimenting with the parameters
 		 */
-//		Parameters.mutateRate = 0.01;
+//		Parameters.mutateChange = 0.5;
+//		Parameters.mutateRate = 0.8;
 		/*************************/
 
 		//number of hidden nodes in the neural network
@@ -39,8 +40,8 @@ public class StartNoGui {
 		
 		
 		//Create a new Neural Network Trainer Using the above parameters 
-		//NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();
-		NeuralNetwork nn = new GeneticAlgorithmUsingElitism();
+		NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();
+//		NeuralNetwork nn = new GeneticAlgorithmUsingElitism();
 		
 		//train the neural net (Go and make a coffee) 
 		nn.run();
