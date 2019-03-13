@@ -32,6 +32,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 		- Make sure the parents are different individuals
 	 * 		- Try with binary tournament
 	 * 		- Change mutation to use gausiom distrobution
+	 * 		- Replace bigger portion of the population.
 	 */
 	@Override
 	public void run() {		
@@ -322,12 +323,13 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 
 	 * 
 	 */
-	private void mutate(ArrayList<Individual> individuals) {		
+	float reduceFactor = 1.0f;
+	private void mutate(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
 				if (Parameters.random.nextDouble() > 0.85) {
-					double change = Parameters.random.nextDouble() - 0.5;
-					individual.chromosome[i] += (change);
+					double change = Parameters.random.nextDouble() - 0.05;
+					individual.chromosome[i] += (change*reduceFactor);
 				}
 //				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
 //					if (Parameters.random.nextBoolean()) {
@@ -337,7 +339,9 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //					}
 //				}
 			}
-		}		
+		}
+//		reduceFactor*=0.9998f;
+//		System.out.println(reduceFactor);
 	}
 
 	/**
