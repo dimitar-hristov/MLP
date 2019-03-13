@@ -39,7 +39,8 @@ public class StartNoGui {
 		
 		
 		//Create a new Neural Network Trainer Using the above parameters 
-		NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();		
+		//NeuralNetwork nn = new ExampleEvolutionaryAlgorithm();
+		NeuralNetwork nn = new GeneticAlgorithmUsingElitism();
 		
 		//train the neural net (Go and make a coffee) 
 		nn.run();
