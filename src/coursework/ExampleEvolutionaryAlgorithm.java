@@ -167,6 +167,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	private Individual tournamentSelection() {
 		// The tournament size of 10% of the population
+		// K - smaller tournament size
 		int tournamentSize = (int)(population.size()*0.1);
 		TreeMap<Integer, Individual> potentialParents = new TreeMap<Integer, Individual>();
 
@@ -304,6 +305,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		/* One point crossover */
 		// This assumes that parent1 and parent2 have chromosomes with the same length
+		// K - random cutPoint
 		int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
 		onePointCrossOver(children, parent1, parent2, cutPoint);
 
@@ -328,6 +330,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
 				if (Parameters.random.nextDouble() > 0.85) {
+					// K - smaller change
 					double change = Parameters.random.nextDouble() - 0.05;
 					individual.chromosome[i] += (change*reduceFactor);
 				}
