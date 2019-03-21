@@ -35,7 +35,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * 		- Replace bigger portion of the population.
 	 */
 	@Override
-	public void run() {		
+	public void run() {
+		System.out.println("Running ExampleEvolutionaryAlgorithm");
 		//Initialise a population of Individuals with random weights
 		population = initialise();
 
@@ -168,7 +169,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private Individual tournamentSelection() {
 		// The tournament size of 10% of the population
 		// K - smaller tournament size
-		int tournamentSize = (int)(population.size()*0.1);
+		int tournamentSize = 20;//(int)(population.size()*0.1);
 		TreeMap<Integer, Individual> potentialParents = new TreeMap<Integer, Individual>();
 
 		while(potentialParents.size() < tournamentSize) {
@@ -306,7 +307,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		/* One point crossover */
 		// This assumes that parent1 and parent2 have chromosomes with the same length
 		// K - random cutPoint
-		int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
+		//int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
+		int cutPoint = Parameters.random.nextInt(parent1.chromosome.length+1);
 		onePointCrossOver(children, parent1, parent2, cutPoint);
 
 		/*DEBUG INF0*/
@@ -329,18 +331,19 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private void mutate(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
 			for (int i = 0; i < individual.chromosome.length; i++) {
-				if (Parameters.random.nextDouble() > 0.85) {
-					// K - smaller change
-					double change = Parameters.random.nextDouble() - 0.05;
-					individual.chromosome[i] += (change*reduceFactor);
-				}
-//				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-//					if (Parameters.random.nextBoolean()) {
-//						individual.chromosome[i] += (Parameters.mutateChange);
-//					} else {
-//						individual.chromosome[i] -= (Parameters.mutateChange);
-//					}
+//				if (Parameters.random.nextDouble() > 0.85) {
+//					// K - smaller change
+//					double change = Parameters.random.nextDouble() - 0.05;
+//					individual.chromosome[i] += (change*reduceFactor);
 //				}
+				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+					double change = Parameters.random.nextDouble() - 0.5;
+					if (Parameters.random.nextBoolean()) {
+						individual.chromosome[i] += (change);
+					} else {
+						individual.chromosome[i] -= (change);
+					}
+				}
 			}
 		}
 //		reduceFactor*=0.9998f;
@@ -384,7 +387,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	{
 		for(Individual individual : newIndividuals) {
 			// The tournament size of 10% of the population
-			int tournamentSize = (int)(population.size()*0.2);
+			int tournamentSize = 20;//(int)(population.size()*0.2);
 			TreeMap<Integer, Individual> potentialMembersToBeReplaced = new TreeMap<Integer, Individual>();
 
 			while(potentialMembersToBeReplaced.size() < tournamentSize) {
