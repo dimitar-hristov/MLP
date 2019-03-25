@@ -86,7 +86,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			
 			// Implemented in NN class. 
 			outputStats();
-			
+			meanScore();
 			//Increment number of completed generations			
 		}
 
@@ -148,7 +148,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private Individual rouletteSelection() {
 		double fitnessSum = 0;
 		for (int i = 0; i < population.size(); i++) {
-			fitnessSum += 1.0 / population.get(i).fitness;
+			fitnessSum += (1.0 - population.get(i).fitness);
 		}
 
 		Individual parent = null;
@@ -157,7 +157,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		fitnessSum = 0;
 
 		for (int i = 0; i < population.size(); i++) {
-			fitnessSum += 1.0 / population.get(i).fitness;
+			fitnessSum += (1.0 - population.get(i).fitness);
 			if (fitnessSum > randomNumber) {
 				parent = population.get(i);
 				break;
@@ -169,7 +169,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	private Individual tournamentSelection() {
 		// The tournament size of 10% of the population
 		// K - smaller tournament size
-		int tournamentSize = 20;//(int)(population.size()*0.1);
+		int tournamentSize = 2;//(int)(population.size()*0.1);
 		TreeMap<Integer, Individual> potentialParents = new TreeMap<Integer, Individual>();
 
 		while(potentialParents.size() < tournamentSize) {
@@ -200,10 +200,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		Individual parent = null;
 
 		/* Selects based on the their fitness*/
-//		parent = rouletteSelection();
+		parent = rouletteSelection();
 
 		/* Selects based on tournament */
-		parent = tournamentSelection();
+//		parent = tournamentSelection();
 
 		return parent.copy();
 	}
@@ -337,7 +337,8 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //					individual.chromosome[i] += (change*reduceFactor);
 //				}
 				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-					double change = Parameters.random.nextDouble() - 0.5;
+					// K - smaller change
+					double change = Parameters.random.nextDouble() - 0.05;
 					if (Parameters.random.nextBoolean()) {
 						individual.chromosome[i] += (change);
 					} else {
@@ -387,7 +388,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	{
 		for(Individual individual : newIndividuals) {
 			// The tournament size of 10% of the population
-			int tournamentSize = 20;//(int)(population.size()*0.2);
+			int tournamentSize = 2;//(int)(population.size()*0.2);
 			TreeMap<Integer, Individual> potentialMembersToBeReplaced = new TreeMap<Integer, Individual>();
 
 			while(potentialMembersToBeReplaced.size() < tournamentSize) {
@@ -440,5 +441,14 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			return 1.0;
 		}
 		return Math.tanh(x);
+	}
+
+	private void meanScore() {
+		double totalFitness = 0;
+		for (Individual ind : population) {
+			totalFitness += ind.fitness;
+		}
+		double meanScore = totalFitness/population.size();
+		System.out.println("\tMean: " + meanScore);
 	}
 }
