@@ -21,9 +21,9 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		System.out.println("Best from initial population "+ best);
 		
 		while (evaluations < Parameters.maxEvaluations) {
-			int portion = population.size() / 4;
-			int restPortion = population.size() * 3/4;
-			int randomLosers = 10;
+			int portion = population.size() * 3 / 5;
+			int restPortion = population.size() * 2 / 5;
+			int randomLosers = 5;
 			int randomMutations = 10;
 			ArrayList<Individual> bestOfCurretPopulation = new ArrayList<Individual>();
 			
@@ -31,7 +31,8 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 			bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, portion));
 			
 			for (int index = 0; index < randomLosers; index++) {
-				int randomNumber = Parameters.random.nextInt((restPortion - portion) + 1) + portion;
+				//int randomNumber = Parameters.random.nextInt((restPortion - portion) + 1) + portion;
+				int randomNumber = Parameters.random.nextInt(restPortion) + portion;
 				bestOfCurretPopulation.add(population.get(randomNumber));
 			}
 			
@@ -41,15 +42,17 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 				mutatedPopulation.add(mutate(bestOfCurretPopulation.get(randomNumber)));
 			}
 			
-			for (Individual x : mutatedPopulation){
-				bestOfCurretPopulation.add(x);
-			}
+			bestOfCurretPopulation.addAll(mutatedPopulation);
 			
 			population = breed(bestOfCurretPopulation);		
 //			System.out.println(population);
 			best = getBest();
 			
 			outputStats();
+			
+			if (best.fitness < 0.015D) {
+				evaluations = Parameters.maxEvaluations + 1;
+			}
 		}
 		
 		saveNeuralNetwork();
@@ -86,23 +89,24 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 	
 	float reduceFactor = 1.0f;
 	private Individual mutate(Individual individual) {
+		double rangeMax = 0.05;
+		double rangeMin = -0.05;
 		Individual newMember = new Individual();
 		newMember.chromosome = individual.chromosome;
-			for (int i = 0; i < newMember.chromosome.length; i++) {
-				if (Parameters.random.nextDouble() > 0.85) {
-					double change = Parameters.random.nextDouble() - 0.5;
-					individual.chromosome[i] += (change*reduceFactor);
+		
+		for (int i = 0; i < newMember.chromosome.length; i++) {
+			double currentFitness = newMember.fitness;
+			if (Parameters.random.nextDouble() < 0.01) {
+				double change = rangeMin + (rangeMax - rangeMin) * Parameters.random.nextDouble();//Parameters.random.nextDouble() - 0.5;
+				newMember.chromosome[i] += (change*reduceFactor);
+				newMember.fitness = Fitness.evaluate(newMember, this);
+				if (currentFitness < newMember.fitness) {
+					break;
 				}
-				/*if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-					if (Parameters.random.nextDouble() < 0.5D) {
-						newMember.chromosome[i] += (Parameters.mutateChange);
-					} else {
-						newMember.chromosome[i] -= (Parameters.mutateChange);
-					}
-				}*/
 			}
-			reduceFactor*=0.9998f;
-			return newMember;
+		}
+//		reduceFactor*=0.9998f;
+		return newMember;
 	}
 	
 	private ArrayList<Individual> breed(ArrayList<Individual> currentBestPopulation){
@@ -134,7 +138,7 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 	
 	private Individual tournamentSelection(ArrayList<Individual> currentBestPopulation) {
 		// The tournament size of 10% of the population
-		int tournamentSize = (int)(currentBestPopulation.size()*0.1);
+		int tournamentSize = 2;//(int)(currentBestPopulation.size()*0.1);
 		TreeMap<Integer, Individual> potentialParents = new TreeMap<Integer, Individual>();
 
 		while(potentialParents.size() < tournamentSize) {

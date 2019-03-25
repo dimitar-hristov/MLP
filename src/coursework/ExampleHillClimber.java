@@ -24,7 +24,7 @@ public class ExampleHillClimber extends NeuralNetwork{
 		//run for max evaluations
 		for(int gen = 0; gen < Parameters.maxEvaluations; gen++) {
 			//mutate the best
-			Individual candidate = mutateBest();
+			Individual candidate = GDM();//mutateBest();
 			
 			//accept if better
 			if(candidate.fitness < best.fitness) {
@@ -48,6 +48,24 @@ public class ExampleHillClimber extends NeuralNetwork{
 			}
 		}
 		Fitness.evaluate(candidate, this);
+		return candidate;
+	}
+	
+	private Individual GDM() {
+		Individual candidate = best.copy();
+		int position = Parameters.random.nextInt(candidate.chromosome.length);
+		double rangeMax = 0.2;
+		double rangeMin = -0.2;
+		double change = rangeMin + (rangeMax - rangeMin) * Parameters.random.nextDouble();
+		
+		for (int index = position; index >= 0; index--) {
+			double currentFitness = candidate.fitness;
+			candidate.chromosome[index] += (change);
+			candidate.fitness = Fitness.evaluate(candidate, this);
+			if (currentFitness < candidate.fitness) {
+				break;
+			}
+		}
 		return candidate;
 	}
 

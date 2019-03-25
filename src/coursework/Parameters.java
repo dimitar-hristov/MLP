@@ -18,7 +18,7 @@ public class Parameters {
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
 		
-	public static int popSize = 100;
+	public static int popSize = 50;
 	public static int maxEvaluations = 20000;
 	
 	// Parameters for mutation 
@@ -32,8 +32,9 @@ public class Parameters {
 	public static Random random = new Random(seed);
 
 	//set the NeuralNetwork class here to use your code from the GUI
-	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
+//	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
 //	public static Class neuralNetworkClass = GeneticAlgorithmUsingElitism.class;
+	public static Class neuralNetworkClass = ExampleHillClimber.class;
 	
 	/**
 	 * Do not change any methods that appear below here.
