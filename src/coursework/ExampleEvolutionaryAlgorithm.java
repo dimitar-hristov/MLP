@@ -87,7 +87,11 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			// Implemented in NN class. 
 			outputStats();
 			meanScore();
-			//Increment number of completed generations			
+			//Increment number of completed generations		
+			
+			for (Individual ind : population) {
+				System.out.println(Arrays.toString(ind.chromosome));
+			}
 		}
 
 		//save the trained network to disk
@@ -183,7 +187,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		for(Entry<Integer, Individual> entry : potentialParents.entrySet()) {
 			Individual individual = entry.getValue();
 			double currentFitness = individual.fitness;
-
 			if (chosenParent == null) {
 				chosenParent = individual;
 				bestFitness = currentFitness;
@@ -193,17 +196,17 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 		}
 
-		return chosenParent;
+		return chosenParent.copy();
 	}
 
 	private Individual select() {
 		Individual parent = null;
 
 		/* Selects based on the their fitness*/
-		parent = rouletteSelection();
+//		parent = rouletteSelection();
 
 		/* Selects based on tournament */
-//		parent = tournamentSelection();
+		parent = tournamentSelection();
 
 		return parent.copy();
 	}
@@ -330,25 +333,24 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	float reduceFactor = 1.0f;
 	private void mutate(ArrayList<Individual> individuals) {
 		for(Individual individual : individuals) {
-			for (int i = 0; i < individual.chromosome.length; i++) {
-//				if (Parameters.random.nextDouble() > 0.85) {
-//					// K - smaller change
-//					double change = Parameters.random.nextDouble() - 0.05;
-//					individual.chromosome[i] += (change*reduceFactor);
-//				}
-				if (Parameters.random.nextDouble() < Parameters.mutateRate) {
-					// K - smaller change
-					double change = Parameters.random.nextDouble() - 0.05;
-					if (Parameters.random.nextBoolean()) {
-						individual.chromosome[i] += (change);
-					} else {
-						individual.chromosome[i] -= (change);
-					}
-				}
-			}
+			mutateHelper(individual);
 		}
 //		reduceFactor*=0.9998f;
 //		System.out.println(reduceFactor);
+	}
+	
+	private void mutateHelper(Individual individual) {
+		for (int i = 0; i < individual.chromosome.length; i++) {
+			if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+				// K - smaller change
+//				double change = 0.05D;//Parameters.random.nextDouble() - 0.05;
+				if (Parameters.random.nextBoolean()) {
+					individual.chromosome[i] += (Parameters.mutateChange);
+				} else {
+					individual.chromosome[i] -= (Parameters.mutateChange);
+				}
+			}
+		}
 	}
 
 	/**
@@ -397,7 +399,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			}
 
 			int indexToBeReplaced = getWorstIndexFromSubpopulation(potentialMembersToBeReplaced);
-			if(population.get(indexToBeReplaced).fitness > individual.fitness) {
+			if((population.get(indexToBeReplaced).fitness-0.001) > individual.fitness && !exists(individual)) {
 				population.set(indexToBeReplaced, individual);
 			}
 		}
@@ -409,6 +411,29 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		// Perform tournament replacement
 		tournamentReplacement(individuals);
+	}
+	
+	private Boolean exists(Individual ind) {		
+		double accuracy = 1000000.0;
+		for (Individual temp : population) {
+			int matchingGenes = 0;
+			for (int index = 0; index < temp.chromosome.length; index++) {
+				double fromPopulationRound = Math.round(temp.chromosome[index] * accuracy) / accuracy;
+				double indRound = Math.round(ind.chromosome[index] * accuracy) / accuracy;
+//				if (temp.chromosome[index] != ind.chromosome[index]) { 
+				if (fromPopulationRound != indRound) {
+					continue;
+				}
+				else {
+					matchingGenes += 1;
+					if (matchingGenes >= (ind.chromosome.length*0.8)) {
+//						System.exit(0);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 
@@ -435,12 +460,15 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 	@Override
 	public double activationFunction(double x) {
-		if (x < -20.0) {
-			return -1.0;
-		} else if (x > 20.0) {
-			return 1.0;
-		}
-		return Math.tanh(x);
+//		if (x < -20.0) {
+//			return -1.0;
+//		} else if (x > 20.0) {
+//			return 1.0;
+//		}
+//		return Math.tanh(x);
+		
+		double output = (2.0/(1+Math.pow(Math.E, -2.0*x))) - 1.0;
+		return output;
 	}
 
 	private void meanScore() {
