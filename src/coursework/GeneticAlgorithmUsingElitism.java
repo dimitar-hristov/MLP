@@ -1,8 +1,12 @@
 package coursework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.TreeMap;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
+
 import java.util.Map.Entry;
 
 import model.Fitness;
@@ -15,34 +19,39 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 	public void run() {
 		System.out.println("Running GeneticAlgorithmUsingElitism");
 		
+		Parameters.popSize = 50;
+		Parameters.minGene = -3.0;
+		Parameters.maxGene = 3.0;
+		Parameters.mutateRate = 0.01;
+		Parameters.mutateChange = 0.05;
+		
 		population = initialise();
 		
 		best = getBest();
 		System.out.println("Best from initial population "+ best);
 		
 		while (evaluations < Parameters.maxEvaluations) {
-			int portion = population.size() * 3 / 5;
-			int restPortion = population.size() * 2 / 5;
-			int randomLosers = 5;
-			int randomMutations = 10;
-			ArrayList<Individual> bestOfCurretPopulation = new ArrayList<Individual>();
-			
+			int portion = (int)(population.size() * 0.1); // 5
+			int randomLosers = 2;
+			int randomMutations = 3;
 			Collections.sort(population);
-			bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, portion));
+			
+			ArrayList<Individual> bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, portion));
 			
 			for (int index = 0; index < randomLosers; index++) {
-				//int randomNumber = Parameters.random.nextInt((restPortion - portion) + 1) + portion;
-				int randomNumber = Parameters.random.nextInt(restPortion) + portion;
+				int randomNumber = Parameters.random.nextInt(Parameters.popSize - portion) + portion;
 				bestOfCurretPopulation.add(population.get(randomNumber));
 			}
-			
-			ArrayList<Individual> mutatedPopulation = new ArrayList<Individual>();
+
 			for (int index = 0; index < randomMutations; index++) {
 				int randomNumber = Parameters.random.nextInt((bestOfCurretPopulation.size()));
-				mutatedPopulation.add(mutate(bestOfCurretPopulation.get(randomNumber)));
+				bestOfCurretPopulation.add(mutate(bestOfCurretPopulation.get(randomNumber)));
+				System.out.println(randomNumber + bestOfCurretPopulation.get(randomNumber).toString());
 			}
 			
-			bestOfCurretPopulation.addAll(mutatedPopulation);
+			System.out.println(population.toString());
+			System.out.println(bestOfCurretPopulation.toString());
+			System.exit(0);
 			
 			population = breed(bestOfCurretPopulation);		
 //			System.out.println(population);
@@ -89,24 +98,22 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 	
 	float reduceFactor = 1.0f;
 	private Individual mutate(Individual individual) {
-		double rangeMax = 0.05;
-		double rangeMin = -0.05;
 		Individual newMember = new Individual();
 		newMember.chromosome = individual.chromosome;
 		
 		for (int i = 0; i < newMember.chromosome.length; i++) {
-			double currentFitness = newMember.fitness;
-			if (Parameters.random.nextDouble() < 0.01) {
-				double change = rangeMin + (rangeMax - rangeMin) * Parameters.random.nextDouble();//Parameters.random.nextDouble() - 0.5;
-				newMember.chromosome[i] += (change*reduceFactor);
-				newMember.fitness = Fitness.evaluate(newMember, this);
-				if (currentFitness < newMember.fitness) {
-					break;
+			if (Parameters.random.nextDouble() < Parameters.mutateRate) {
+				if(Parameters.random.nextBoolean()) {
+					newMember.chromosome[i] += (Parameters.mutateChange);
+				}
+				else {
+					newMember.chromosome[i] += (Parameters.mutateChange);
 				}
 			}
 		}
 //		reduceFactor*=0.9998f;
-		return newMember;
+		newMember.fitness = Fitness.evaluate(newMember, this);
+		return newMember.copy();
 	}
 	
 	private ArrayList<Individual> breed(ArrayList<Individual> currentBestPopulation){
