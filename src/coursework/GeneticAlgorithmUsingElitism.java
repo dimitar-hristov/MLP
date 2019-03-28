@@ -3,6 +3,7 @@ package coursework;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Random;
 import java.util.TreeMap;
 
 import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
@@ -30,6 +31,10 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		best = getBest();
 		System.out.println("Best from initial population "+ best);
 		
+		boolean jump = false;
+		double currentBest = Double.MAX_VALUE;
+		int stuckCounter = 0;
+
 		while (evaluations < Parameters.maxEvaluations) {
 			int portion = 5;
 			int randomLosers = 2;
@@ -40,36 +45,75 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 			
 			for (int index = 0; index < randomLosers; index++) {
 				int randomNumber = Parameters.random.nextInt(Parameters.popSize - portion) + portion;
-				bestOfCurretPopulation.add(population.get(randomNumber));
+				Individual chosenBadOne = population.get(randomNumber);
+
+				while (exists(chosenBadOne, bestOfCurretPopulation)) {
+					randomNumber = Parameters.random.nextInt(Parameters.popSize - portion) + portion;
+					chosenBadOne = population.get(randomNumber);
+				}
+
+				bestOfCurretPopulation.add(chosenBadOne);
 			}
 
 			for (int index = 0; index < randomMutations; index++) {
-				int randomNumber = Parameters.random.nextInt((bestOfCurretPopulation.size()));
+				int randomNumber = Parameters.random.nextInt(bestOfCurretPopulation.size());
 				Individual mutatedMember = mutate(bestOfCurretPopulation.get(randomNumber));
+
+				while(exists(mutatedMember, bestOfCurretPopulation)) {
+					mutatedMember = mutate(mutatedMember);
+				}
+				mutatedMember.fitness = Fitness.evaluate(mutatedMember, this);
 				bestOfCurretPopulation.add(mutatedMember);
-//				System.out.println(randomNumber + bestOfCurretPopulation.get(randomNumber).toString());
 			}
-			
-//			System.out.println(population.toString());
-//			System.out.println(bestOfCurretPopulation.toString());
-//			for(Individual temp : bestOfCurretPopulation) {
-//				System.out.println(Arrays.toString(temp.chromosome));
-//			}
-//			System.exit(0);
-			
+
 			breed(bestOfCurretPopulation);
 			best = getBest();
 			
 			outputStats();
 			
-			if (best.fitness < 0.015D) {
+			if (best.fitness < 0.015D && evaluations >= (Parameters.maxEvaluations / 2)) {
 				evaluations = Parameters.maxEvaluations + 1;
 			}
 			
 			meanScore();
+			
+			if (best.fitness < currentBest) {
+				currentBest = best.fitness;
+				stuckCounter = 0;
+			} else {
+				stuckCounter += 1;
+			}
+			
+			if((((best.fitness - meanScore()) < 0.09) || stuckCounter >= 10) && !jump) {				
+				System.out.println(stuckCounter);
+				Parameters.mutateChange *= 2.5;
+				Parameters.mutateRate *= 2.0;
+				jump = true;
+			}
+			else if(jump || Parameters.mutateChange >= 0.09) {
+				Parameters.mutateChange /= 2.5;
+				Parameters.mutateRate /= 2.0;
+				jump = false;
+			}
 		}
 		
 		saveNeuralNetwork();
+	}
+	
+	private int getWorstIndex() {
+		Individual worst = null;
+		int idx = -1;
+		for (int i = 0; i < population.size(); i++) {
+			Individual individual = population.get(i);
+			if (worst == null) {
+				worst = individual;
+				idx = i;
+			} else if (individual.fitness > worst.fitness) {
+				worst = individual;
+				idx = i; 
+			}
+		}
+		return idx;
 	}
 	
 	private ArrayList<Individual> initialise() {
@@ -108,35 +152,26 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 	private Individual mutate(Individual individual) {
 		Individual newMember = new Individual();
 		newMember.chromosome = Arrays.copyOf(individual.chromosome, individual.chromosome.length);
-		
+//		System.out.println(Parameters.mutateChange);
 		for (int i = 0; i < newMember.chromosome.length; i++) {
 			if (Parameters.random.nextDouble() < Parameters.mutateRate) {
 				if(Parameters.random.nextBoolean()) {
-					newMember.chromosome[i] += (Parameters.mutateChange);
+					newMember.chromosome[i] += (Parameters.mutateChange*reduceFactor);
 				}
 				else {
-					newMember.chromosome[i] -= (Parameters.mutateChange);
+					newMember.chromosome[i] -= (Parameters.mutateChange*reduceFactor);
 				}
 			}
 		}
 //		reduceFactor*=0.9998f;
-		newMember.fitness = Fitness.evaluate(newMember, this);
+//		newMember.fitness = Fitness.evaluate(newMember, this);
 		return newMember.copy();
 	}
 	
 	private Boolean exists(Individual ind, ArrayList<Individual> currentPopulation) {		
-		double accuracy = 100000000.0;
 		for (Individual temp : currentPopulation) {
-			int matchingGenes = 0;
-			for (int index = 0; index < temp.chromosome.length; index++) {
-				double fromPopulationRound = Math.round(temp.chromosome[index] * accuracy) / accuracy;
-				double indRound = Math.round(ind.chromosome[index] * accuracy) / accuracy;
-				if (fromPopulationRound == indRound) {
-					matchingGenes += 1;
-					if (matchingGenes >= (ind.chromosome.length*0.8)) {
-						return true;
-					}
-				}
+			if (Arrays.equals(temp.chromosome, ind.chromosome)) {
+				return true;
 			}
 		}
 		return false;
@@ -149,18 +184,26 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		while (population.size() < Parameters.popSize) {
 			Individual parent1 = select(currentBestPopulation); 
 			Individual parent2 = select(currentBestPopulation);
-		
-			if (parent1 == parent2) {
-				System.out.print("\n\tOuch, the same parent\n");
-				System.exit(0);
+
+			while (Arrays.equals(parent1.chromosome, parent2.chromosome)) {
+				parent2 = select(currentBestPopulation);
 			}
 		
 			ArrayList<Individual> children = reproduce(parent1, parent2);
-		
-			evaluateIndividuals(children);
+			ArrayList<Individual> updatedChildren = new ArrayList<>();
 			
-			population.addAll(children);
+			for (Individual child : children) {
+				while (exists(child, population)) {
+					child = mutate(child);
+				}
+				updatedChildren.add(child);
+			}
+			
+			evaluateIndividuals(updatedChildren);
+			
+			population.addAll(updatedChildren);
 		}
+//		System.exit(0);
 	}
 	
 	private Individual tournamentSelection(ArrayList<Individual> currentBestPopulation) {
@@ -217,9 +260,16 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		Individual parent = null;
 
 		/* Selects based on tournament */
-		parent = tournamentSelection(currentBestPopulation);
-		
-//		parent = rouletteSelection(currentBestPopulation);
+		if(Parameters.random.nextDouble() < 0.9) {
+//			if (evaluations <= 10000) {
+				parent = tournamentSelection(currentBestPopulation);
+//			} else {
+//				parent = rouletteSelection(currentBestPopulation);
+//			}
+		}
+		else {
+			parent = currentBestPopulation.get(Parameters.random.nextInt(currentBestPopulation.size()));
+		}
 
 		return parent.copy();
 	}
@@ -300,9 +350,10 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 			}
 		}
 
+		childOne = mutate(childOne);
 		
 		children.add(childOne);
-		children.add(childTwo);
+//		children.add(childTwo);
 	}
 	
 	@Override
@@ -315,12 +366,13 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		return Math.tanh(x);
 	}
 	
-	private void meanScore() {
+	private double meanScore() {
 		double totalFitness = 0;
 		for (Individual ind : population) {
 			totalFitness += ind.fitness;
 		}
 		double meanScore = totalFitness/population.size();
 		System.out.println("\tMean: " + meanScore);
+		return meanScore;
 	}
 }
