@@ -36,9 +36,9 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		int stuckCounter = 0;
 
 		while (evaluations < Parameters.maxEvaluations) {
-			int portion = 5;
-			int randomLosers = 2;
-			int randomMutations = 3;
+			int portion = 15;
+			int randomLosers = 5;
+			int randomMutations = 15;
 			Collections.sort(population);
 			
 			ArrayList<Individual> bestOfCurretPopulation = new ArrayList<Individual>(population.subList(0, portion));
@@ -84,15 +84,15 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 				stuckCounter += 1;
 			}
 			
-			if((((best.fitness - meanScore()) < 0.09) || stuckCounter >= 10) && !jump) {				
+			if((((meanScore() - best.fitness) < 0.1) || stuckCounter >= 3)) {
 				System.out.println(stuckCounter);
-				Parameters.mutateChange *= 2.5;
-				Parameters.mutateRate *= 2.0;
+				Parameters.mutateChange = 0.6;
+				Parameters.mutateRate = 0.1;
 				jump = true;
 			}
 			else if(jump || Parameters.mutateChange >= 0.09) {
-				Parameters.mutateChange /= 2.5;
-				Parameters.mutateRate /= 2.0;
+				Parameters.mutateChange = 0.05;
+				Parameters.mutateRate = 0.01;
 				jump = false;
 			}
 		}
