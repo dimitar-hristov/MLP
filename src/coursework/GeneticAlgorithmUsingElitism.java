@@ -3,7 +3,9 @@ package coursework;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
@@ -283,10 +285,16 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		int cutPoint = Parameters.random.nextInt(parent1.chromosome.length);
 //		int cutPoint = parent1.chromosome.length/2;
 		onePointCrossOver(children, parent1, parent2, cutPoint);
-		
+
+		/* N point crossover*/
+//		nPointCrossOver(children, parent1, parent2);
+
 		/* Uniform crossover */
 //		uniformCrossover(children, parent1, parent2);
-		
+
+		/* Crossover per neuron*/
+//		crossoverPerNeuron(children, parent1, parent2);
+
 		/*DEBUG INF0*/
 //		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
 //		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
@@ -322,7 +330,49 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 		children.add(childOne);
 //		children.add(childTwo);
 	}
-	
+
+	private void nPointCrossOver(ArrayList<Individual> children, Individual parent1, Individual parent2) 
+	{
+		int n = 2;//Parameters.random.nextInt(1)+1;
+		Set<Integer> nPointsSet = new HashSet<>();
+
+		for (int i = 0; i < n;i++) {
+			nPointsSet.add(Parameters.random.nextInt(parent1.chromosome.length));
+		}
+		nPointsSet.add(parent1.chromosome.length);
+
+		ArrayList<Integer> nPoints = new ArrayList<Integer>(nPointsSet);
+		Collections.sort(nPoints);
+
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+		boolean flip = true;
+		int lastPoint = 0;
+		for (Integer point : nPoints) {
+			if (flip) {
+				for(int i = lastPoint; i < point; i++) {
+					childOne.chromosome[i] = parent1.chromosome[i];
+					childTwo.chromosome[i] = parent2.chromosome[i];
+				}
+				flip = false;
+			}
+			else {
+				for(int i = lastPoint; i < point; i++) {
+					childOne.chromosome[i] = parent2.chromosome[i];
+					childTwo.chromosome[i] = parent1.chromosome[i];
+				}
+				flip = true;
+			}
+			lastPoint = point;
+		}
+
+		childOne = mutate(childOne);
+		childTwo = mutate(childTwo);
+
+		children.add(childOne);
+		children.add(childTwo);
+	}
+
 	private void uniformCrossover(ArrayList<Individual> children, Individual parent1, Individual parent2) 
 	{
 		Individual childOne = new Individual();
@@ -355,6 +405,69 @@ public class GeneticAlgorithmUsingElitism extends NeuralNetwork {
 //		children.add(childTwo);
 	}
 	
+	int chromosomePointer = 0;
+	private void reproduceHelper(Individual mother, Individual father, Individual childOne, Individual childTwo, int range, int previousLayerSize, int curretLayerSize) {
+		int neuronCounter = 0;
+		ArrayList<Double> neuronFather = new ArrayList<Double>();
+		ArrayList<Double> neuronMother = new ArrayList<Double>();
+		ArrayList<Double> childOneBiases = new ArrayList<Double>();
+		ArrayList<Double> childTwoBiases = new ArrayList<Double>();
+
+		for (int i = chromosomePointer; i < range; i++) {
+			neuronFather.add(father.chromosome[i]);
+			neuronMother.add(mother.chromosome[i]);
+			if ((i+1) % previousLayerSize == 0) {
+				neuronCounter += 1;
+				int index = (curretLayerSize - neuronCounter) * previousLayerSize + neuronCounter;
+
+				if (Parameters.random.nextBoolean()) {
+					for (int j = 0; j < neuronFather.size(); j++) {
+						childOne.chromosome[chromosomePointer] = neuronFather.get(j);
+						childTwo.chromosome[chromosomePointer] = neuronMother.get(j);
+						chromosomePointer += 1;
+					}
+					childOneBiases.add(father.chromosome[i+index]);
+					childTwoBiases.add(mother.chromosome[i+index]);
+				}
+				else {
+					for (int j = 0; j < neuronFather.size(); j++) {
+						childOne.chromosome[chromosomePointer] = neuronMother.get(j);
+						childTwo.chromosome[chromosomePointer] = neuronFather.get(j);
+						chromosomePointer += 1;
+					}
+					childOneBiases.add(mother.chromosome[i+index]);
+					childTwoBiases.add(father.chromosome[i+index]);
+				}
+
+				neuronFather.clear();
+				neuronMother.clear();
+			}
+		}
+
+		for (int i = 0; i<childOneBiases.size(); i++) {
+			childOne.chromosome[chromosomePointer] = childOneBiases.get(i);
+			childTwo.chromosome[chromosomePointer] = childTwoBiases.get(i);
+			chromosomePointer += 1;
+		}
+	}
+
+	private void crossoverPerNeuron(ArrayList<Individual> children, Individual parent1, Individual parent2)
+	{
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+
+		chromosomePointer = 0;
+
+		int range = Parameters.getNumHidden() * NeuralNetwork.numInput;
+		reproduceHelper(parent1, parent2, childOne, childTwo, range, NeuralNetwork.numInput, Parameters.getNumHidden());
+
+		range = parent1.chromosome.length;
+		reproduceHelper(parent1, parent2, childOne, childTwo, range, Parameters.getNumHidden(), NeuralNetwork.numOutput);
+
+		children.add(childOne.copy());
+		children.add(childTwo.copy());
+	}
+
 	@Override
 	public double activationFunction(double x) {
 		if (x < -20.0) {
