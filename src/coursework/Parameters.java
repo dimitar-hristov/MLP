@@ -13,7 +13,7 @@ public class Parameters {
 	 * You may add other Parameters as required to this class 
 	 * 
 	 */
-	private static int numHidden = 6;	
+	private static int numHidden = 4;	
 	private static int numGenes = calculateNumGenes();
 	public static double minGene = -1; // specifies minimum and maximum weight values 
 	public static double maxGene = +1;
@@ -32,8 +32,8 @@ public class Parameters {
 	public static Random random = new Random(seed);
 
 	//set the NeuralNetwork class here to use your code from the GUI
-//	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
-	public static Class neuralNetworkClass = GeneticAlgorithmUsingElitism.class;
+	public static Class neuralNetworkClass = ExampleEvolutionaryAlgorithm.class;
+//	public static Class neuralNetworkClass = GeneticAlgorithmUsingElitism.class;
 //	public static Class neuralNetworkClass = ExampleHillClimber.class;
 	
 	/**

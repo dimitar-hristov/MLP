@@ -36,7 +36,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 */
 	@Override
 	public void run() {
-		System.out.println("Running ExampleEvolutionaryAlgorithm");
+		System.out.println("WARNING! RUNNING EXPERIMENTS!\n Running ExampleEvolutionaryAlgorithm");
 		//Initialise a population of Individuals with random weights
 		population = initialise();
 
@@ -63,12 +63,6 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 //			System.out.print("Parent1: "+parent1.fitness);
 //			System.out.print("\nParent2: "+parent2.fitness);
 			
-			// Avoid selecting the same parent twice
-			if (parent1 == parent2) {
-				System.out.print("\n\tOuch, the same parent\n");
-//				parent2 = select();
-			}
-
 			// Generate a child by crossover. Not Implemented			
 			ArrayList<Individual> children = reproduce(parent1, parent2);			
 			
@@ -89,9 +83,9 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			meanScore();
 			//Increment number of completed generations		
 			
-			for (Individual ind : population) {
-				System.out.println(Arrays.toString(ind.chromosome));
-			}
+//			for (Individual ind : population) {
+//				System.out.println(Arrays.toString(ind.chromosome));
+//			}
 		}
 
 		//save the trained network to disk
