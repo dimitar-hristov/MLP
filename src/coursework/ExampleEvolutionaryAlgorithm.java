@@ -337,11 +337,11 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		for (int i = 0; i < individual.chromosome.length; i++) {
 			if (Parameters.random.nextDouble() < Parameters.mutateRate) {
 				// K - smaller change
-//				double change = 0.05D;//Parameters.random.nextDouble() - 0.05;
+				double change = Parameters.random.nextGaussian()*0.1+Parameters.mutateChange;//Parameters.random.nextDouble() - 0.05;
 				if (Parameters.random.nextBoolean()) {
-					individual.chromosome[i] += (Parameters.mutateChange);
+					individual.chromosome[i] += (change);
 				} else {
-					individual.chromosome[i] -= (Parameters.mutateChange);
+					individual.chromosome[i] -= (change);
 				}
 			}
 		}
