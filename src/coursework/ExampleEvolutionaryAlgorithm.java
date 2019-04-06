@@ -46,7 +46,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 
 		/**
 		 * main EA processing loop
-		 */		
+		 */
+//		boolean jump = false;
+//		double currentBest = Double.MAX_VALUE;
+//		int stuckCounter = 0;
 		
 		while (evaluations < Parameters.maxEvaluations) {
 
@@ -83,8 +86,24 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 			meanScore();
 			//Increment number of completed generations		
 			
-//			for (Individual ind : population) {
-//				System.out.println(Arrays.toString(ind.chromosome));
+			/*if (best.fitness < currentBest) {
+				currentBest = best.fitness;
+				stuckCounter = 0;
+			} else {
+				stuckCounter += 1;
+			}
+			
+			if(stuckCounter >= 100 && best.fitness>0.019) {
+				System.out.println(stuckCounter);
+				Parameters.mutateRate = Math.min(0.21,Parameters.mutateRate+0.01);
+			}
+			else {
+				Parameters.mutateRate = 0.1;
+			}*/
+//			Parameters.mutateRate = Math.max(Parameters.mutateRate * 0.9995, 0.1);
+//			System.out.println("Muate: "+Parameters.mutateRate);
+//			if(best.fitness < 0.015) {
+//				evaluations = Parameters.maxEvaluations + 1;
 //			}
 		}
 
