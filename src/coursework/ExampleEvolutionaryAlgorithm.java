@@ -2,8 +2,11 @@ package coursework;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 
 import model.Fitness;
@@ -313,6 +316,45 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 	 * NEEDS REPLACED with proper method this code just returns exact copies of the
 	 * parents.
 	 */
+	private void nPointCrossOver(ArrayList<Individual> children, Individual parent1, Individual parent2) 
+	{
+		int n = 5;
+		Set<Integer> nPointsSet = new HashSet<>();
+
+		while(nPointsSet.size() < n) {
+			nPointsSet.add(Parameters.random.nextInt(parent1.chromosome.length));
+		}
+		nPointsSet.add(parent1.chromosome.length);
+
+		ArrayList<Integer> nPoints = new ArrayList<Integer>(nPointsSet);
+		Collections.sort(nPoints);
+
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+		boolean flip = true;
+		int lastPoint = 0;
+		for (Integer point : nPoints) {
+			if (flip) {
+				for(int i = lastPoint; i < point; i++) {
+					childOne.chromosome[i] = parent1.chromosome[i];
+					childTwo.chromosome[i] = parent2.chromosome[i];
+				}
+				flip = false;
+			}
+			else {
+				for(int i = lastPoint; i < point; i++) {
+					childOne.chromosome[i] = parent2.chromosome[i];
+					childTwo.chromosome[i] = parent1.chromosome[i];
+				}
+				flip = true;
+			}
+			lastPoint = point;
+		}
+
+		children.add(childOne);
+		children.add(childTwo);
+	}
+	
 	private ArrayList<Individual> reproduce(Individual parent1, Individual parent2) {
 
 		ArrayList<Individual> children = new ArrayList<>();
@@ -326,6 +368,7 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		//int cutPoint = NeuralNetwork.numInput*Parameters.getNumHidden()+Parameters.getNumHidden();
 		int cutPoint = Parameters.random.nextInt(parent1.chromosome.length+1);
 		onePointCrossOver(children, parent1, parent2, cutPoint);
+//		nPointCrossOver(children, parent1, parent2);
 
 		/*DEBUG INF0*/
 //		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
