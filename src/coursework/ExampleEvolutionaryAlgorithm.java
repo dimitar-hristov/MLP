@@ -355,6 +355,36 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		children.add(childTwo);
 	}
 	
+	private void uniformCrossover(ArrayList<Individual> children, Individual parent1, Individual parent2) 
+	{
+		Individual childOne = new Individual();
+		Individual childTwo = new Individual();
+
+		// This assumes that parent1 and parent2 have chromosomes with the same length
+		int chromosomeLength = parent1.chromosome.length;
+
+		for(int i = 0; i < chromosomeLength; i++) {
+			if (Parameters.random.nextDouble() < 0.5D) {
+				childOne.chromosome[i] = parent1.chromosome[i];
+			}
+			else {
+				childOne.chromosome[i] = parent2.chromosome[i];
+			}
+		}
+
+		for(int i = 0; i < chromosomeLength; i++) {
+			if (Parameters.random.nextDouble() < 0.5D) {
+				childTwo.chromosome[i] = parent1.chromosome[i];
+			}
+			else {
+				childTwo.chromosome[i] = parent2.chromosome[i];
+			}
+		}
+		
+		children.add(childOne);
+		children.add(childTwo);
+	}
+	
 	private ArrayList<Individual> reproduce(Individual parent1, Individual parent2) {
 
 		ArrayList<Individual> children = new ArrayList<>();
@@ -369,7 +399,10 @@ public class ExampleEvolutionaryAlgorithm extends NeuralNetwork {
 		int cutPoint = Parameters.random.nextInt(parent1.chromosome.length+1);
 		onePointCrossOver(children, parent1, parent2, cutPoint);
 //		nPointCrossOver(children, parent1, parent2);
-
+		
+		/* Crossover per neuron*/
+//		uniformCrossover(children, parent1, parent2);
+		
 		/*DEBUG INF0*/
 //		System.out.println("parent1: "+Arrays.toString(parent1.chromosome));
 //		System.out.println("parent2: "+Arrays.toString(parent2.chromosome));
