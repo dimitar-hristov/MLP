@@ -10,4 +10,4 @@ Please refer to the report for further details.
 
 The following demo shows how a fleet of 8 spaceships are successfully landed. It is important to note, that they all have random initial positions and velocities:
 
-![Demo](https://bitbucket.org/dimitarshr/mlp-trained-with-ea-to-land-a-spaceship/raw/1c53e650ccbeb011ef33ab0d7e3e3a504c9ee061/demo.gif=100x20)
+![](https://bitbucket.org/dimitarshr/mlp-trained-with-ea-to-land-a-spaceship/raw/1c53e650ccbeb011ef33ab0d7e3e3a504c9ee061/demo.gif)
